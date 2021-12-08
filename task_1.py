@@ -3,15 +3,38 @@ import math
 
 class Rational:
     """Class for performing arithmetic with fractions"""
-
     def __init__(self, num=0, denom=1):
-        """Method that creates an object of Rational and initialises it with numerator and denumerator"""
-        if not isinstance(num, int) or not isinstance(denom, int):
+        """Method that creates an object of Rational and initialises it with numerator and denominator"""
+        self.__num = num
+        self.__denom = denom
+        self.reduce()
+
+    @property
+    def num(self):
+        return self.__num
+
+    @property
+    def denom(self):
+        return self.__denom
+
+    @num.setter
+    def num(self, num):
+        if not isinstance(num, int):
+            raise TypeError("Numerator and denominator must be of integer type")
+        self.__num = num
+
+    @denom.setter
+    def denom(self, denom):
+        if not isinstance(denom, int):
             raise TypeError("Numerator and denominator must be of integer type")
         if not denom:
             raise ZeroDivisionError
-        self.__num = num // math.gcd(num, denom)
-        self.__denom = denom // math.gcd(num, denom)
+
+    def reduce(self):
+        """Method that reduces numerator and denominator"""
+        rational_gcd = math.gcd(self.__num, self.__denom)
+        self.__num //= rational_gcd
+        self.__denom //= rational_gcd
 
     def fraction(self):
         """Method that returns Rational in form numerator/denominator"""
@@ -27,6 +50,7 @@ class Rational:
             raise TypeError("For Rational operations with int or other Rational are supported")
         self.__num = other.__num
         self.__denom = other.__denom
+        self.reduce()
 
     def __add__(self, other):
         """Method that performs Rational + other (Rational, int)"""
@@ -39,6 +63,19 @@ class Rational:
             return Rational(result_num, self.__denom)
         raise TypeError("This operator support as operands Rational with int or another Rational")
 
+    def __iadd__(self, other):
+        if not isinstance(other, (Rational, int)):
+            raise TypeError("This operator support as operands Rational with int or another Rational")
+        """Method that performs Rational += other (Rational, int)"""
+        if isinstance(other, Rational):
+            self.__num = self.__num * other.__denom + other.__num * self.__denom
+            self.__denom = self.__denom * other.__denom
+        if isinstance(other, int):
+            self.__num = self.__num + other * self.__denom
+            self.__denom = self.__denom
+        self.reduce()
+        return self
+
     def __sub__(self, other):
         """Method that performs Rational - other (Rational, int)"""
         if isinstance(other, Rational):
@@ -50,6 +87,19 @@ class Rational:
             return Rational(result_num, self.__denom)
         raise TypeError("This operator support as operands Rational with int or another Rational")
 
+    def __isub__(self, other):
+        """Method that performs Rational -= other (Rational, int)"""
+        if not isinstance(other, (Rational, int)):
+            raise TypeError("This operator support as operands Rational with int or another Rational")
+        if isinstance(other, Rational):
+            self.__num = self.__num * other.__denom - other.__num * self.__denom
+            self.__denom = self.__denom * other.__denom
+        if isinstance(other, int):
+            self.__num = self.__num - other * self.__denom
+            self.__denom = self.__denom
+        self.reduce()
+        return self
+
     def __mul__(self, other):
         """Method that performs Rational * other (Rational, int)"""
         if isinstance(other, Rational):
@@ -57,6 +107,18 @@ class Rational:
         if isinstance(other, int):
             return Rational(self.__num * other, self.__denom * other)
         raise TypeError("This operator support as operands Rational with int or another Rational")
+
+    def __imul__(self, other):
+        if not isinstance(other, (Rational, int)):
+            raise TypeError("This operator support as operands Rational with int or another Rational")
+        if isinstance(other, Rational):
+            self.__num *= other.__num
+            self.__denom *= other.__denom
+        if isinstance(other, int):
+            self.__num *= other
+            self.__denom *= other
+        self.reduce()
+        return self
 
     def __truediv__(self, other):
         """Method that performs Rational / other (Rational, int)"""
@@ -70,9 +132,31 @@ class Rational:
             return Rational(self.__num, self.__denom * other)
         raise TypeError("This operator support as operands Rational with int or another Rational")
 
+    def __itruediv__(self, other):
+        if not isinstance(other, (Rational, int)):
+            raise TypeError("This operator support as operands Rational with int or another Rational")
+        if isinstance(other, Rational):
+            if not other.result():
+                raise ZeroDivisionError("Divider cannot be 0")
+            self.__num *= other.__denom
+            self.__denom *= other.__num
+        if isinstance(other, int):
+            if not other:
+                raise ZeroDivisionError("Divider cannot be 0")
+            self.__denom *= other
+        self.reduce()
+        return self
+
     def __floordiv__(self, other):
         """Method that performs Rational // other (Rational, int)"""
         return Rational(round(self.__truediv__(other).result()), 1)
+
+    def __ifloordiv__(self, other):
+        if not isinstance(other, (Rational, int)):
+            raise TypeError("This operator support as operands Rational with int or another Rational")
+        self.__num = round(self.__truediv__(other).result())
+        self.__denom = 1
+        return self
 
     def __lt__(self, other):
         """Method that performs Rational < other (Rational, float, int)"""
@@ -88,9 +172,7 @@ class Rational:
 
     def __gt__(self, other):
         """Method that performs Rational > other (Rational, float, int)"""
-        if self.__lt__(other):
-            return False
-        return True
+        return -self.__lt__(other)
 
     def __le__(self, other):
         """Method that performs Rational <= other (Rational, float, int)"""
@@ -130,9 +212,7 @@ class Rational:
 
     def __ne__(self, other):
         """Method that performs Rational != other (Rational, float, int)"""
-        if self.__eq__(other):
-            return False
-        return True
+        return -self.__eq__(other)
 
 
 if __name__ == '__main__':
