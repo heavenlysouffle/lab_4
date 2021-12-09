@@ -1,9 +1,9 @@
 class Product:
     """Class to store information about the product in stock (name, quantity, price)"""
     def __init__(self, name, quantity, price):
-        self.__name = name
-        self.__quantity = quantity
-        self.__price = price
+        self.name = name
+        self.quantity = quantity
+        self.price = price
 
     def cost(self):
         """Method that returns total cost of all product's samples"""
@@ -43,10 +43,11 @@ class Product:
             raise TypeError
         if price < 0:
             raise ValueError("Price cannot be lower than 0")
+        self.__price = price
 
     def __iadd__(self, other):
         if not isinstance(other, int):
-            raise TypeError
+            return NotImplemented
         self.__quantity += other
         if self.__quantity < 0:
             self.__quantity = 0
@@ -54,7 +55,7 @@ class Product:
 
     def __isub__(self, other):
         if not isinstance(other, int):
-            raise TypeError
+            return NotImplemented
         self.__quantity -= other
         if self.__quantity < 0:
             self.__quantity = 0
@@ -120,11 +121,17 @@ class Composition:
         return f'{product} total cost: {product.cost()}'
 
     def __iadd__(self, *products):
-        self.add(*products)
+        try:
+            self.add(*products)
+        except (KeyError, TypeError, ValueError):
+            return NotImplemented
         return self
 
     def __isub__(self, *products):
-        self.remove(*products)
+        try:
+            self.remove(*products)
+        except (IndexError, TypeError, ValueError):
+            return NotImplemented
         return self
 
     def __getitem__(self, key):
